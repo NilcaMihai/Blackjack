@@ -37,6 +37,7 @@ void Card::printCard()
 	case CardSuit::spade:	 std::cout << "Spade";	  break;
 	default:		std::cout << "Unidentified\n";	  break;
 	}
+	std::cout << "\n";
 }
 
 int Card::getValue()

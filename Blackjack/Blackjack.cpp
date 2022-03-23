@@ -1,44 +1,23 @@
 #include <iostream>
-#include <Windows.h>
 #include "Card.h"
 #include "Deck.h"
 #include "Player.h"
+#include "Dealer.h"
 
-bool hit()
-{
-	char option{};
-	while (true)
-	{
-		std::cout << "What's your next move:\n"
-				  << "Press H - for a new card or S - if you want to stand!\n";
-		std::cin >> option;
-		if (option == 'h')
-			option = 'H';
-		if (option == 's')
-			option = 'S';
-		switch (option)
-		{
-		case 'H': return true;
-		case 'S': return false;
-		}
-	}
-}
-
-bool playerTurn(Deck &theDeck, Player &thePlayer)
+bool playerTurn(Deck &theDeck, Player &player)
 {
 	while (true) 
 	{
-		if (thePlayer.isBust())
+		if (player.isBust())
 		{
-			std::cout << "You have " << thePlayer.getScore() << " points!\n";
 			return true;
 		}
 		else
 		{
-			if (hit())
+			if (player.hit())
 			{
-				int playedCard = thePlayer.drawCard(theDeck);
-				std::cout << "Now you have " << thePlayer.getScore() << " points!\n";
+				player.drawCard(theDeck);
+				std::cout << "Now you have " << player.getScore() << " points!\n";
 			}
 			else
 			{
@@ -50,62 +29,108 @@ bool playerTurn(Deck &theDeck, Player &thePlayer)
 	return false;
 }
 
-bool dealerTurn(Deck &theDeck, Player &Dealer, Player &thePlayer)
+bool dealerTurn(Deck &theDeck, Dealer &dealer, Player &player)
 {
-	if (thePlayer.getScore() > g_maxScore)
+	if (player.getScore() > g_maxScore)
 	{
 		return false;
 	}
-	while((Dealer.getScore()< g_minimDealerScore) && (Dealer.getScore()< thePlayer.getScore()))
+	while((dealer.getScore() < g_minimDealerScore) && (dealer.getScore() < player.getScore()))
 	{
-		std::cout << "The dealer draw a card...\n";
 		Sleep(1500);
-		Dealer.drawCard(theDeck);
-		std::cout << "The dealer has " << Dealer.getScore() << " points!\n";
+		dealer.drawCard(theDeck);
+		std::cout << "The dealer has " << dealer.getScore() << " points!\n";
 	}
-	while ((Dealer.getScore() < thePlayer.getScore()) && (Dealer.getScore() < g_maxScore))
+	while ((dealer.getScore() < player.getScore()) && (dealer.getScore() < g_maxScore))
 	{
-		std::cout << "The dealer draw a card...\n";
 		Sleep(1500);
-		Dealer.drawCard(theDeck);
-		std::cout << "The dealer has " << Dealer.getScore() << " points!\n";
+		dealer.drawCard(theDeck);
+		std::cout << "The dealer has " << dealer.getScore() << " points!\n";
 	}
-	if (Dealer.getScore() > g_maxScore)
+	if (dealer.getScore() > g_maxScore)
 	{
 		std::cout << "The dealer is busted!\n";
+		std::cout << "You WIN!!!\n";
+		player.paidBet();
 		return true;
 	}
-	std::cout << "You lose!\n";
+	if (dealer.getScore() > 10 && dealer.getScore() == player.getScore())
+	{
+		std::cout << "It is a DRAW!\n";
+		player.paidDraw();
+		return true;
+	}
+	std::cout << "You LOSE...\n";
 	return false;
 }
 
-void playBlackJack(Deck &theDeck)
+void playBlackJack(Deck &theDeck, Player &player)
 {
-	Player Dealer{};
-	Dealer.drawCard(theDeck);
-	std::cout << "The dealer has " << Dealer.getScore() << " points!\n";
-	
-	Player player{};
-	player.drawCard(theDeck);
-	player.drawCard(theDeck);
-	std::cout << "You have " << player.getScore() << " points!\n";
+	system("cls");
+	if (player.getSold() >= 1.0)
+	{
+		player.bet();
 
-	if (playerTurn(theDeck, player))
-	{
-		std::cout << "You lose...\n";
+		Dealer dealer{};
+		dealer.drawCard(theDeck);
+		std::cout << "The dealer has " << dealer.getScore() << " points!\n";
+
+		player.drawCard(theDeck);
+		player.drawCard(theDeck);
+		std::cout << "You have " << player.getScore() << " points!\n";
+		if (player.getScore() == 21)
+		{
+			std::cout << "You have got a Blackjack!!!\n"
+				<< "You WIN!\n";
+			player.paidBlackjack();
+			return;
+		}
+
+		if (playerTurn(theDeck, player))
+		{	
+			std::cout << "You have " << player.getScore() << " points and the dealer has "
+				<< dealer.getScore() << " points!\n";
+			std::cout << "You LOSE...\n";
+		}
+		if (dealerTurn(theDeck, dealer, player))
+		{
+			std::cout << "Do you dare for another round?\n";
+		}
 	}
-	if (dealerTurn(theDeck, Dealer, player))
-	{
-		std::cout << "You WIN!\n";
-	}
+	else
+		std::cout << "You don't have money...You must make a deposit!\n";
 }
-
 
 int main()
 {
+	std::cout << "Welcome to our little Blackjack casino!!!\n";
+	std::cout << "What is your name?\n";
+	std::string userName;
+	std::getline(std::cin, userName);
+	Player playerOne{ userName};
+
 	Deck deck{};
 	deck.shuffleDeck();
-	
-	playBlackJack(deck);
-	
+
+	bool optionPlay{ true };
+	while (optionPlay)
+	{
+		int key;
+		std::cout << "Press the key for your desiered option:\n"
+			<< "1 - Play a new game!\n"
+			<< "2 - Add some money in your cont!\n"
+			<< "3 - Check your info!\n"
+			<< "9 - End game!\n";
+		std::cin >> key;
+		switch (key)
+		{
+		case 1: playBlackJack(deck, playerOne);		break;
+		case 2: playerOne.updateSold();				break;
+		case 3: playerOne.getInfo();				break;
+		default: optionPlay = false; 
+			system("cls");
+			std::cout << "Thank you for playing!\n";
+			break;
+		}
+	}
 }

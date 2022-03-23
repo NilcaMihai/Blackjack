@@ -2,6 +2,10 @@
 #include "Card.h"
 #include <iostream>
 #include <random>
+#include <Windows.h>
+
+const int g_maxScore{ 21 };
+const int g_minimDealerScore{ 17 };
 
 class Deck
 {
@@ -20,5 +24,4 @@ public:
 	Card& dealCard();
 	//Destructor
 	~Deck();
-	
 };
